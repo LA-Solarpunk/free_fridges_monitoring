@@ -1,20 +1,34 @@
 import os
-
-from pyairtable import Api
+import time
+import logging
 from datetime import datetime
 
-api = Api(os.environ['AIRTABLE_API_KEY'])
+import schedule
 
-table = api.table('app3C7ktuj4lyrQS6', 'tbluQQWvULLlvZ2KY')
+import temperature_interface
+import door_state_interface
+import charge_interface
+import airtable
 
-print(table.all())
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+fridge_id = os.environ["FRIDGE_ID"]
 
-new_entry = {
-    "Fridge": ['recsvT3QAhS953Vin'],
-    "Timestamp": "2025-9-30",
-    "Temperature (°C)": 25,
-    "Charge Status (%)": 80,
-    "Door Status": "Closed",
-}
+def send_data():
+    temperature_data = temperature_interface.read_temp()[0]
+    charge_data = charge_interface.get_charge_data()
+    door_state = door_state_interface.is_door_open()
+    entry = airtable.Entry(temperature_data, charge_data, door_state, fridge_id)
+    logger.info(f"Publishing new entry to airtable: {entry.get_json_string()}")
+    airtable.send_data_to_airtable(entry)
 
-table.create(new_entry)
+def main():
+    logger.info("Starting monitoring client")
+    schedule.every().hour.at("00:00").do(send_data)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1) 
+
+if __name__ == "__main__":
+    main()
