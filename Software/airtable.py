@@ -39,10 +39,20 @@ def get_fridge_ids():
     table = api.table(BASE_NAME, FRIDGE_TABLE_NAME)
     return table.all(fields=["Fridge Name"])
 
+def get_fridge_name(fridge_id):
+    api = Api(os.environ["AIRTABLE_API_KEY"])
+    table = api.table(BASE_NAME, FRIDGE_TABLE_NAME)
+    table_data = table.all(fields=["Fridge Name"])
+    for row in table_data:
+        if row["id"] == fridge_id:
+            return row["fields"]["Fridge Name"]
+    return None
+    
+
 def airtable_recent_rows_by_id_to_csv(
     id_value: str,
     id_field: str = "Fridge",
-    days: int = 30,
+    days: int = 31,
     date_field: Optional[str] = None,  # if None, uses record Created Time
 ) -> str:
     """
@@ -95,10 +105,8 @@ def airtable_recent_rows_by_id_to_csv(
 
     for rec in filtered:
         row = {"record_id": rec.get("id")}
-        # Flatten fields; for linked fields that are lists, join with commas
         for k, v in rec.get("fields", {}).items():
             if isinstance(v, list):
-                # Join list into a comma-separated string
                 row[k] = ", ".join(str(x) for x in v)
             else:
                 row[k] = v
