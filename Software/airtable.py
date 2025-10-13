@@ -107,10 +107,8 @@ def airtable_recent_rows_by_id_to_csv(
     return output.getvalue()
 
 def main():
-    #json_data = get_fridge_ids()
-    #print(json.dumps(json_data, indent=4))
-    fridge_id = os.environ["FRIDGE_ID"]
-    print(airtable_recent_rows_by_id_to_csv(fridge_id))
+    json_data = get_fridge_ids()
+    print(json.dumps(json_data, indent=4))
 
 if __name__ == "__main__":
     main()
