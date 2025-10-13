@@ -6,7 +6,7 @@ from datetime import datetime
 import schedule
 
 import temperature_interface
-import door_state_interface
+import magnet_sensor_interface
 import charge_interface
 import airtable
 import google_drive
@@ -30,7 +30,7 @@ FRIDGE_ID = os.environ["FRIDGE_ID"]
 def send_data():
     temperature_data = temperature_interface.read_temp()[0]
     charge_data = charge_interface.get_charge_data()
-    door_state = door_state_interface.is_door_open()
+    door_state = magnet_sensor_interface.is_door_open()
     entry = airtable.Entry(temperature_data, charge_data, door_state, FRIDGE_ID)
     logger.info(f"Publishing new entry to airtable: {entry.get_json_string()}")
     airtable.send_data_to_airtable(entry)
