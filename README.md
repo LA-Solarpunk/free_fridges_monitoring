@@ -33,4 +33,4 @@ You'll also need to add your email as a test user. Go to the Oauth consent scree
 
 Create a new directory in your home directory called Credentials. Move the credentials.json file to this directory. In your .bashrc add a line `export FRIDGE_GDRIVE_CREDENTIALS="/path/to/credentials.json"` where /path/to is the full path to where you saved this file.
 
-If this is the first time you're running this, you may need to run the google_drive.py file to authorize the application. Call `python google_drive.py`. This requires a browser to be opened up to do, so if you're doing this on the Pi, make sure you have VNC setup or you're running with a monitor connected.
+If this is the first time you're running this, you may need to run the google_drive.py file to authorize the application. Call `python google_drive.py`. On a headless pi, this will open up a sign in in the terminal. Once you do this, it will generate a token.json file. You should be able to re-use this file for other monitoring systems, just copy it into the Software directory.

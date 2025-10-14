@@ -22,12 +22,16 @@ def is_door_open() -> MagnetSensorState:
         return MagnetSensorState.ERROR
     
 def setup_magnet_sensors():
+    GPIO.setmode(GPIO.BCM)
     GPIO.setup(DOOR_PIN_NC, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(DOOR_PIN_NO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 
 def main():
+    setup_magnet_sensors()
     while True:
         print(f"Door state {is_door_open()}")
+        time.sleep(0.2)
 
 if __name__ == "__main__":
     main()
