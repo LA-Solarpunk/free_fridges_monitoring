@@ -4,6 +4,7 @@ from typing import Optional, List
 from pyairtable import Api
 from pyairtable.formulas import AND, Field, IS_AFTER, DATEADD, CREATED_TIME, EQ, TODAY
 from dataclasses import dataclass
+from magnet_sensor_interface import MagnetSensorState 
 import io
 from io import StringIO
 import csv
@@ -16,11 +17,15 @@ FRIDGE_TABLE_NAME = "tbl6qhf2XkHFyNKrg"
 class Entry:
     temperature: float
     charge_status: float
-    door_status: bool
+    door_status: MagnetSensorState
     fridge_id: str
 
     def get_json_string(self):
-        status = "Open" if self.door_status else "Closed"
+        status = "Open"
+        if self.door_status == MagnetSensorState.DISCONNECTED:
+            status = "Closed"
+        elif self.door_status == MagnetSensorState.ERROR:
+            status = "Error"
         new_entry = {
             "Fridge": [self.fridge_id],
             "Temperature (°C)": self.temperature,
