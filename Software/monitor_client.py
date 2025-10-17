@@ -26,10 +26,11 @@ logging.basicConfig(
 )
 FRIDGE_ID = os.environ["FRIDGE_ID"]
 
+charge_controller = charge_interface.ChargeInterface()
 
 def send_data():
     temperature_data = temperature_interface.read_temp()[0]
-    charge_data = charge_interface.get_charge_data()
+    charge_data = charge_controller.get_charge_data()
     door_state = magnet_sensor_interface.is_door_open()
     entry = airtable.Entry(temperature_data, charge_data, door_state, FRIDGE_ID)
     logger.info(f"Publishing new entry to airtable: {entry.get_json_string()}")
