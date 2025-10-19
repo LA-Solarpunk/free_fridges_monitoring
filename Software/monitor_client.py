@@ -19,6 +19,7 @@ pull data hourly and save that data to gdrive monthly.
 TODO(Heidt) - hourly schedules are ok if missed, but monthly is bad. If there's an issue, a month may not
               get logged. Should maybe make a database or just simple local log to determine when things have
               happened and use that as reference.
+TODO(Heidt) - should probably move away from script approach to module approach to aid testing
 """
 
 logger = logging.getLogger(__name__)
@@ -28,8 +29,9 @@ logging.basicConfig(
 FRIDGE_ID = os.environ["FRIDGE_ID"]
 
 charge_controller = charge_interface.ChargeInterface()
+magnet_sensor_interface.setup_magnet_sensors()
 
-def send_data():
+def get_entry():
     errors = ""
     temperature_data = temperature_interface.read_temp()[0]
     charge_data = 0
@@ -39,6 +41,10 @@ def send_data():
         errors += "No response from charge controller\n"
     door_state = magnet_sensor_interface.is_door_open()
     entry = airtable.Entry(temperature_data, charge_data, door_state, FRIDGE_ID, errors)
+    return entry
+
+def send_data():
+    entry =  get_entry()
     logger.info(f"Publishing new entry to airtable: {entry.get_json_string()}")
     airtable.send_data_to_airtable(entry)
 
@@ -55,7 +61,6 @@ def save_data_to_drive():
 
 def main():
     logger.info("Starting monitoring client")
-    magnet_sensor_interface.setup_magnet_sensors()
     schedule.every().hour.at("00:00").do(send_data)
     schedule.every().day.at("02:00").do(save_data_to_drive)
 
