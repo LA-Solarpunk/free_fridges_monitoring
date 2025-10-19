@@ -19,6 +19,7 @@ class Entry:
     charge_status: float
     door_status: MagnetSensorState
     fridge_id: str
+    errors: str
 
     def get_json_string(self):
         status = "Open"
@@ -31,6 +32,7 @@ class Entry:
             "Temperature (°C)": self.temperature,
             "Charge Status (%)": self.charge_status,
             "Door Status": status,
+            "Errors": self.errors
         }
         return new_entry
 

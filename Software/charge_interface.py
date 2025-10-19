@@ -1,26 +1,29 @@
-from renogymodbus import RenogyChargeController
+from renogymodbus import RenogyChargeController, find_slaveaddress
 import minimalmodbus
 import logging
 
 
 class ChargeInterface:
-    def __init__(self):
+    def __init__(self, serial_port="/dev/serial0"):
+        self.serial_port = serial_port
+        self.controller = None
         self.setup_controller()
 
-    def setup_controller(self, serial_port="/dev/ttySerial0"):
+    def setup_controller(self):
         logging.info("Setting up charge controller")
-        controller = RenogyChargeController(serial_port, 255)
-        if self._try_address(controller, 255):
-            self.controller = controller
+        self.controller = RenogyChargeController(self.serial_port, 255)
+        if self._try_address(self.controller, 255):
             return
-        elif self._try_address(controller, 1):
-            self.controller = controller
+        elif self._try_address(self.controller, 1):
             return
         else:
-            for i in range(1, 255):
-                if self._try_address(controller, i):
-                    self.controller = controller
-                    return
+            logging.info("Performing wide scan of addresses")
+            addresses = find_slaveaddress(self.serial_port)
+            if addresses:
+                # just use the first address in the weird case there are multiple on the bus
+                self.controller.address = addresses[0]
+            else:
+                logging.error("Could not find any device!")
 
     def _try_address(self, controller: RenogyChargeController, address: int):
         controller.address = address
@@ -37,5 +40,11 @@ class ChargeInterface:
         return self.controller.get_battery_state_of_charge()
 
 
+def main():
+    charger = ChargeInterface()
+    print(charger.get_charge_data())
+
+if __name__ == "__main__":
+    main()
 
     

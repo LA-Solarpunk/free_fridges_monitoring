@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 
 import schedule
+import minimalmodbus
 
 import temperature_interface
 import magnet_sensor_interface
@@ -29,10 +30,15 @@ FRIDGE_ID = os.environ["FRIDGE_ID"]
 charge_controller = charge_interface.ChargeInterface()
 
 def send_data():
+    errors = ""
     temperature_data = temperature_interface.read_temp()[0]
-    charge_data = charge_controller.get_charge_data()
+    charge_data = 0
+    try:
+        charge_data = charge_controller.get_charge_data()
+    except minimalmodbus.NoResponseError:
+        errors += "No response from charge controller\n"
     door_state = magnet_sensor_interface.is_door_open()
-    entry = airtable.Entry(temperature_data, charge_data, door_state, FRIDGE_ID)
+    entry = airtable.Entry(temperature_data, charge_data, door_state, FRIDGE_ID, errors)
     logger.info(f"Publishing new entry to airtable: {entry.get_json_string()}")
     airtable.send_data_to_airtable(entry)
 
@@ -49,6 +55,7 @@ def save_data_to_drive():
 
 def main():
     logger.info("Starting monitoring client")
+    magnet_sensor_interface.setup_magnet_sensors()
     schedule.every().hour.at("00:00").do(send_data)
     schedule.every().day.at("02:00").do(save_data_to_drive)
 
