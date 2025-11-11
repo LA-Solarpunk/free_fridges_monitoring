@@ -8,35 +8,14 @@ from magnet_sensor_interface import MagnetSensorState
 import io
 from io import StringIO
 import csv
+from messages import SensorEntry
 
 BASE_NAME = "app3C7ktuj4lyrQS6" 
 READINGS_TABLE_NAME = "tbluQQWvULLlvZ2KY"
 FRIDGE_TABLE_NAME = "tbl6qhf2XkHFyNKrg"
 
-@dataclass
-class Entry:
-    temperature: float
-    charge_status: float
-    door_status: MagnetSensorState
-    fridge_id: str
-    errors: str
 
-    def get_json_string(self):
-        status = "Closed"
-        if self.door_status == MagnetSensorState.DISCONNECTED:
-            status = "Open"
-        elif self.door_status == MagnetSensorState.ERROR:
-            status = "Error"
-        new_entry = {
-            "Fridge": [self.fridge_id],
-            "Temperature (°C)": self.temperature,
-            "Charge Status (%)": self.charge_status,
-            "Door Status": status,
-            "Errors": self.errors
-        }
-        return new_entry
-
-def send_data_to_airtable(entry: Entry):
+def send_data_to_airtable(entry: SensorEntry):
     api = Api(os.environ["AIRTABLE_API_KEY"])
     table = api.table(BASE_NAME, READINGS_TABLE_NAME)
     table.create(entry.get_json_string())

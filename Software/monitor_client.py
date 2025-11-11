@@ -9,7 +9,8 @@ import minimalmodbus
 import temperature_interface
 import magnet_sensor_interface
 import charge_interface
-import airtable
+import mqtt
+import messages
 import google_drive
 
 """
@@ -30,8 +31,10 @@ FRIDGE_ID = os.environ["FRIDGE_ID"]
 
 charge_controller = charge_interface.ChargeInterface()
 magnet_sensor_interface.setup_magnet_sensors()
+mqtt_client = mqtt.connect_mqtt()
 
 def get_entry():
+    #TODO(Heidt) probably make a data aggregator type class to put all this logic
     errors = ""
     temperature_data = temperature_interface.read_temp()[0]
     charge_data = 0
@@ -40,29 +43,17 @@ def get_entry():
     except minimalmodbus.NoResponseError:
         errors += "No response from charge controller\n"
     door_state = magnet_sensor_interface.is_door_open()
-    entry = airtable.Entry(temperature_data, charge_data, door_state, FRIDGE_ID, errors)
+    entry = messages.SensorEntry(temperature_data, charge_data, door_state, FRIDGE_ID, errors)
     return entry
 
 def send_data():
     entry =  get_entry()
     logger.info(f"Publishing new entry to airtable: {entry.get_json_string()}")
-    airtable.send_data_to_airtable(entry)
-
-def save_data_to_drive():
-    # only run on the first of the month
-    if datetime.today().day != 1:
-        return
-    fridgename = airtable.get_fridge_name(FRIDGE_ID)
-    filename = f"{fridgename}_{datetime.now().isoformat()}.csv"
-    logger.info(f"Saving {filename} to google drive")
-    airtable_data = airtable.airtable_recent_rows_by_id_to_csv(FRIDGE_ID)
-    google_drive.upload_csv_to_drive(airtable_data, filename)
-
+    mqtt.publish_data(mqtt_client, entry)
 
 def main():
     logger.info("Starting monitoring client")
     schedule.every().hour.at("00:00").do(send_data)
-    schedule.every().day.at("02:00").do(save_data_to_drive)
 
     while True:
         schedule.run_pending()
