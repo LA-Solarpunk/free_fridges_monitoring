@@ -4,13 +4,15 @@ import logging
 import time
 from messages import SensorEntry
 
-#TODO(Heidt) make a default .env file for all this!
-BROKER = "archlinux"
-PORT = 1883
-DATA_TOPIC = "fridges/sensor_data"
-CLIENT_ID = "ktown_alexandria"
-USERNAME = os.environ["MQTT_USERNAME"]
-PASSWORD = os.environ["MQTT_PASSWORD"]
+import config
+
+CONFIG = config.load_settings()
+CLIENT_ID = CONFIG.device.device_id
+USERNAME = CONFIG.mqtt.username
+PASSWORD = CONFIG.mqtt.password
+BROKER = CONFIG.mqtt.broker
+PORT = CONFIG.mqtt.port
+DATA_TOPIC = CONFIG.mqtt.data_topic
 
 FIRST_RECONNECT_DELAY = 1
 RECONNECT_RATE = 2

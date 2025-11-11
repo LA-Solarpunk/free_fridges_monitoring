@@ -1,0 +1,18 @@
+[device]
+device_id = "__REPLACEME__"
+
+[airtable]
+airtable_api_key = "__REPLACEME__"
+
+[gdrive]
+fridge_gdrive_credentials = "__REPLACEME__"
+
+[mqtt]
+broker = "archlinux"
+port = 1883
+data_topic = "fridges/sensor_data"
+username = "__REPLACEME__"
+password = "__REPLACEME__"
+
+[app]
+log_level = "INFO"

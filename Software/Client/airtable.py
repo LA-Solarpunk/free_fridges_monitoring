@@ -4,8 +4,6 @@ from typing import Optional, List
 from pyairtable import Api
 from pyairtable.formulas import AND, Field, IS_AFTER, DATEADD, CREATED_TIME, EQ, TODAY
 from dataclasses import dataclass
-from magnet_sensor_interface import MagnetSensorState 
-import io
 from io import StringIO
 import csv
 from messages import SensorEntry

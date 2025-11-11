@@ -12,6 +12,7 @@ import charge_interface
 import mqtt
 import messages
 import google_drive
+import config
 
 """
 This is the main file for the monitoring client. It creates a basic hourly and monthly scheduler to
@@ -27,7 +28,8 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] - %(message)s", level=logging.INFO
 )
-FRIDGE_ID = os.environ["FRIDGE_ID"]
+settings = config.load_settings()
+FRIDGE_ID = settings.device.device_id
 
 charge_controller = charge_interface.ChargeInterface()
 magnet_sensor_interface.setup_magnet_sensors()
