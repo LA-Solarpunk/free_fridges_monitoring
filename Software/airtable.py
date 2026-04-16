@@ -22,9 +22,9 @@ class Entry:
     errors: str
 
     def get_json_string(self):
-        status = "Open"
+        status = "Closed"
         if self.door_status == MagnetSensorState.DISCONNECTED:
-            status = "Closed"
+            status = "Open"
         elif self.door_status == MagnetSensorState.ERROR:
             status = "Error"
         new_entry = {
