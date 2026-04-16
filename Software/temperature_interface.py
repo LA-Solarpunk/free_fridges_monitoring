@@ -1,28 +1,68 @@
-# SPDX-FileCopyrightText: 2019 Mikey Sklar for Adafruit Industries
-#
-# SPDX-License-Identifier: MIT
-
+import os
 import glob
-import time
-from typing import Tuple
+import logging
 
-def read_temp_raw() -> str:
-    base_dir = '/sys/bus/w1/devices/'
-    device_folder = glob.glob(base_dir + '28*')[0]
-    device_file = device_folder + '/w1_slave'
-    f = open(device_file, 'r')
-    lines = f.readlines()
-    f.close()
-    return lines
+"""
+TODOS:
+- there's hopefully a better way of mapping pins to sensors than the implicit ordering in config.txt...
+"""
 
-def read_temp() -> Tuple[float, float]:
-    lines = read_temp_raw()
-    while lines[0].strip()[-3:] != 'YES':
-        time.sleep(0.2)
-        lines = read_temp_raw()
-    equals_pos = lines[1].find('t=')
-    if equals_pos != -1:
-        temp_string = lines[1][equals_pos+2:]
-        temp_c = float(temp_string) / 1000.0
-        temp_f = temp_c * 9.0 / 5.0 + 32.0
-        return temp_c, temp_f
+def get_w1_pin_map(gpio_pins: list[int]) -> dict[str, int]:
+    """
+    Returns a dict mapping sensor ID (e.g. '28-abcdef012345') to its GPIO pin.
+    
+    gpio_pins: ordered list of GPIO pins as specified in config.txt overlays,
+               e.g. [4, 17] if you have gpiopin=4 loaded before gpiopin=17.
+    """
+    masters_base = "/sys/bus/w1/devices"
+    
+    masters = sorted(glob.glob(os.path.join(masters_base, "w1_bus_master*")))
+    
+    if len(masters) != len(gpio_pins):
+        raise RuntimeError(
+            f"Found {len(masters)} W1 master(s) but expected {len(gpio_pins)}. "
+            f"Check your /boot/config.txt overlays."
+        )
+    
+    sensor_to_pin = {}
+ 
+    for master_path, gpio_pin in zip(masters, gpio_pins):
+        slaves_file = os.path.join(master_path, "w1_master_slaves")
+        
+        with open(slaves_file, "r") as f:
+            slaves = [line.strip() for line in f if line.strip()]
+        
+        for slave_id in slaves:
+            if slave_id.startswith("28-"):  # DS18B20 family code
+                sensor_to_pin[slave_id] = gpio_pin
+                logging.info(f"  Sensor {slave_id}  →  GPIO{gpio_pin}")
+    
+    return sensor_to_pin
+
+
+def read_temperature(sensor_id: str) -> float | None:
+    """Read temperature in Celsius from a DS18B20 by its sensor ID."""
+    device_file = f"/sys/bus/w1/devices/{sensor_id}/w1_slave"
+    
+    with open(device_file, "r") as f:
+        lines = f.readlines()
+    
+    if lines[0].strip().endswith("YES"):
+        temp_str = lines[1].split("t=")[1].strip()
+        return float(temp_str) / 1000.0
+    
+    return None  # CRC check failed
+
+
+if __name__ == "__main__":
+    # Match the order of dtoverlay lines in config.txt
+    GPIO_PINS = [5, 6]
+    
+    print("Discovering sensors...")
+    sensor_map = get_w1_pin_map(GPIO_PINS)
+    
+    print("\nTemperature readings:")
+    for sensor_id, pin in sensor_map.items():
+        temp = read_temperature(sensor_id)
+        print(f"  GPIO{pin} | {sensor_id} | {temp:.3f}°C")
+
