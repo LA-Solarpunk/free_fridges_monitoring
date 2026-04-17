@@ -1,6 +1,7 @@
 
 from magnet_sensor_interface import MagnetSensorState 
 from dataclasses import dataclass
+import json
 
 @dataclass
 class SensorEntry:
@@ -23,4 +24,4 @@ class SensorEntry:
             "Door Status": status,
             "Errors": self.errors
         }
-        return new_entry
+        return json.dumps(new_entry)
