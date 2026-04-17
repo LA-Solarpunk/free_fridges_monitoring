@@ -5,23 +5,30 @@ import json
 
 @dataclass
 class SensorEntry:
-    temperature: float
+    fridge_temperature: float
+    freezer_temperature: float
     charge_status: float
-    door_status: MagnetSensorState
+    fridge_door_status: MagnetSensorState
+    freezer_door_status: MagnetSensorState
     fridge_id: str
     errors: str
 
-    def get_json_string(self):
+    def get_doorstatus_string(self, status: MagnetSensorState):
         status = "Closed"
-        if self.door_status == MagnetSensorState.DISCONNECTED:
+        if status == MagnetSensorState.DISCONNECTED:
             status = "Open"
-        elif self.door_status == MagnetSensorState.ERROR:
+        elif status == MagnetSensorState.ERROR:
             status = "Error"
+        return status
+
+    def get_json_string(self):
         new_entry = {
             "Fridge": [self.fridge_id],
-            "Temperature (°C)": self.temperature,
+            "Fridge Temperature (°C)": self.fridge_temperature,
+            "Freezer Temperature (°C)": self.freezer_temperature,
             "Charge Status (%)": self.charge_status,
-            "Door Status": status,
+            "Fridge Door Status": self.get_doorstatus_string(self.fridge_door_status),
+            "Freezer Door Status": self.get_doorstatus_string(self.freezer_door_status),
             "Errors": self.errors
         }
         return json.dumps(new_entry)

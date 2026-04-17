@@ -66,6 +66,6 @@ if __name__ == "__main__":
     logger.addHandler(stream_handler)
     logger.info(CONFIG)
 
-    data = SensorEntry(26.0, 79.0, MagnetSensorState.CONNECTED, "test fridge", "") 
+    data = SensorEntry(10.0, -2.0, 79.0, MagnetSensorState.CONNECTED, MagnetSensorState.CONNECTED, "test fridge", "") 
     client = connect_mqtt()
     publish_data(client, data)
