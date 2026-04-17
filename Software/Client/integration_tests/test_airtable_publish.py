@@ -11,6 +11,8 @@ TODO(Heidt) convert to package, adding .. to sys is a code smell
 """
 
 def main():
+    print("sending data")
+    time.sleep(5.0)
     send_data()
 
 if __name__ == "__main__":
