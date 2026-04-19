@@ -53,6 +53,19 @@ def read_temperature(sensor_id: str) -> float | None:
     
     return None  # CRC check failed
 
+def get_temperatures(gpio_pins):
+    """
+    Returns a dict mapping gpio pin to temperature
+    
+    gpio_pins: ordered list of GPIO pins as specified in config.txt overlays,
+               e.g. [4, 17] if you have gpiopin=4 loaded before gpiopin=17.
+    """
+    sensor_map = get_w1_pin_map(gpio_pins)
+    temperatures = {}
+    for sensor_id, pin in sensor_map.items():
+        temperatures[pin] = read_temperature(sensor_id)
+    return temperatures
+
 
 if __name__ == "__main__":
     # Match the order of dtoverlay lines in config.txt

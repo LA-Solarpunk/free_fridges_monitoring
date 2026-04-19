@@ -1,25 +1,29 @@
-
-from magnet_sensor_interface import MagnetSensorState 
 from dataclasses import dataclass
+from enum import Enum
 import json
+
+class DoorStateEnum(Enum):
+    OPEN = 0
+    CLOSED = 1
+    UNKNOWN = 2
 
 @dataclass
 class SensorEntry:
     fridge_temperature: float
     freezer_temperature: float
     charge_status: float
-    fridge_door_status: MagnetSensorState
-    freezer_door_status: MagnetSensorState
+    fridge_door_status: DoorStateEnum
+    freezer_door_status: DoorStateEnum
     fridge_id: str
     errors: str
 
-    def get_doorstatus_string(self, status: MagnetSensorState):
-        status = "Closed"
-        if status == MagnetSensorState.DISCONNECTED:
-            status = "Open"
-        elif status == MagnetSensorState.ERROR:
-            status = "Error"
-        return status
+    def get_doorstatus_string(self, door_status: DoorStateEnum):
+        status_string = "Closed"
+        if door_status == DoorStateEnum.OPEN:
+            status_string = "Open"
+        elif door_status == DoorStateEnum.UNKNOWN:
+            status_string = "Error"
+        return status_string
 
     def get_json_string(self):
         new_entry = {
@@ -32,3 +36,7 @@ class SensorEntry:
             "Errors": self.errors
         }
         return json.dumps(new_entry)
+    
+class SensorReading:
+    value: int | float
+    error: str
