@@ -75,7 +75,7 @@ class MagnetManager:
                 if reading.NC != self.last_reading.NC and reading.NO != self.last_reading.NO:
                     self.error = MagnetErrorEnum.FUNCTIONING
             else:
-                if reading.NC == self.last_reading.NC:
+                if reading.NC == self.last_reading.NC and not self.error == MagnetErrorEnum.NO_BROKEN:
                     self.error = MagnetErrorEnum.NC_BROKEN
                     self.door_state = DoorStateEnum.CLOSED if reading.NO == GPIO.LOW else DoorStateEnum.OPEN
                 else:
@@ -83,6 +83,14 @@ class MagnetManager:
                     self.door_state = DoorStateEnum.CLOSED if reading.NC == GPIO.HIGH else DoorStateEnum.OPEN
         self.last_reading = reading
         return self.door_state, self.error
+    
+def error_to_string(error: MagnetErrorEnum):
+    if error == MagnetErrorEnum.FUNCTIONING:
+        return None
+    elif error == MagnetErrorEnum.NC_BROKEN:
+        return "Door sensor NC line broken"
+    else:
+        return "Door sensor NO line broken"
 
 class DoorSensorManager:
     def __init__(self):
@@ -90,13 +98,14 @@ class DoorSensorManager:
         self.fridge = MagnetManager(fridge_pins)
         self.freezer = MagnetManager(freezer_pins)
     
-    def get_fridge_door(self) -> Tuple[DoorStateEnum, MagnetErrorEnum]:
-        return self.fridge.read()
+    def get_fridge_door(self) -> SensorReading:
+        result = self.fridge.read()
+        return SensorReading(result[0], error_to_string(result[1]))
     
-    def get_freezer_door(self) -> Tuple[DoorStateEnum, MagnetErrorEnum]:
-        return self.freezer.read()
-
-
+    def get_freezer_door(self) -> SensorReading:
+        result = self.freezer.read()
+        return SensorReading(result[0], error_to_string(result[1]))
+         
 def main():
     manager = DoorSensorManager()
     while True:

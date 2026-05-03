@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import os
 import logging
+import pprint
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ def load_settings() -> Settings:
         mqtt=mqtt_config,
         app=app_config,
     )
-    logger.info(f"Loaded new config\n{settings}")
+    logger.info(f"Loaded new config \n{pprint.pformat(settings)}")
     
     return settings
 

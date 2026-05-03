@@ -2,7 +2,7 @@ from paho.mqtt import client as mqtt_client
 import os
 import logging
 import time
-from messages import SensorEntry, MagnetSensorState
+from messages import SensorEntry
 import config
 
 logger = logging.getLogger(__name__)

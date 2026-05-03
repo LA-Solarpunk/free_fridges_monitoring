@@ -7,7 +7,7 @@ import schedule
 import minimalmodbus
 
 import temperature_interface
-import Client.door_sensor_interface as door_sensor_interface
+import door_sensor_interface
 import charge_interface
 import mqtt
 import messages
@@ -33,7 +33,7 @@ settings = config.load_settings()
 FRIDGE_ID = settings.device.device_id
 
 charge_controller = charge_interface.ChargeInterface()
-door_sensor_interface.setup_magnet_sensors()
+door_sensors = door_sensor_interface.DoorSensorManager()
 mqtt_client = mqtt.connect_mqtt()
 
 # assuming fridge, freezer ordering
@@ -42,25 +42,19 @@ gpio_pins = [5, 6]
 
 def get_entry():
     # TODO(Heidt) probably make a data aggregator type class to put all this logic
-    errors = ""
     temperature_data = temperature_interface.get_temperatures(gpio_pins)
 
-    charge_data = 0
-    try:
-        charge_data = charge_controller.get_charge_data()
-    except minimalmodbus.NoResponseError:
-        errors += "No response from charge controller\n"
-    fridge_door_state = door_sensor_interface.is_fridge_door_open()
-    freezer_door_state = door_sensor_interface.is_freezer_door_open()
+    charge_reading = charge_controller.get_charge_data()        
+    fridge_door_state = door_sensors.get_fridge_door()
+    freezer_door_state = door_sensors.get_freezer_door()
 
     entry = messages.SensorEntry(
         temperature_data[gpio_pins[0]],
         temperature_data[gpio_pins[1]],
-        charge_data,
+        charge_reading,
         fridge_door_state,
         freezer_door_state,
-        FRIDGE_ID,
-        errors,
+        FRIDGE_ID
     )
     return entry
 

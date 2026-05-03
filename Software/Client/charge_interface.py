@@ -1,7 +1,7 @@
 from renogymodbus import RenogyChargeController, find_slaveaddress
 import minimalmodbus
 import logging
-
+from messages import SensorReading
 
 class ChargeInterface:
     def __init__(self, serial_port="/dev/serial0"):
@@ -36,8 +36,14 @@ class ChargeInterface:
             logging.warning(f"Could not find charge controller at address {address}")
         return False
     
-    def get_charge_data(self):
-        return self.controller.get_battery_state_of_charge()
+    def get_charge_data(self) -> SensorReading:
+        charge_data = 0.0
+        errors = None
+        try:
+            charge_data = self.controller.get_battery_state_of_charge()
+        except minimalmodbus.NoResponseError:
+            errors = "No response from charge controller"
+        return SensorReading(charge_data, errors)
 
 
 def main():

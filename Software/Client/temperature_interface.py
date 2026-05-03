@@ -1,6 +1,7 @@
 import os
 import glob
 import logging
+from messages import SensorReading
 
 """
 TODOS:
@@ -63,7 +64,9 @@ def get_temperatures(gpio_pins):
     sensor_map = get_w1_pin_map(gpio_pins)
     temperatures = {}
     for sensor_id, pin in sensor_map.items():
-        temperatures[pin] = read_temperature(sensor_id)
+        temp = read_temperature(sensor_id)
+        error = "Issue reading temp sensor" if temp is None else None
+        temperatures[pin] = SensorReading(temp, error)
     return temperatures
 
 
