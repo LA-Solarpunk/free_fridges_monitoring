@@ -4,15 +4,14 @@ import logging
 from datetime import datetime
 
 import schedule
-import minimalmodbus
 
 import temperature_interface
 import door_sensor_interface
 import charge_interface
 import mqtt
 import messages
-import google_drive
 import config
+import json
 
 """
 This is the main file for the monitoring client. It creates a basic hourly and monthly scheduler to
@@ -45,15 +44,19 @@ def get_entry():
     temperature_data = temperature_interface.get_temperatures(gpio_pins)
 
     charge_reading = charge_controller.get_charge_data()        
-    fridge_door_state = door_sensors.get_fridge_door()
-    freezer_door_state = door_sensors.get_freezer_door()
+    fridge_door_state, fridge_door_open_count, fridge_door_open_time = door_sensors.get_fridge_door()
+    freezer_door_state, freezer_door_open_count, freezer_door_open_time = door_sensors.get_freezer_door()
 
     entry = messages.SensorEntry(
         temperature_data[gpio_pins[0]],
         temperature_data[gpio_pins[1]],
         charge_reading,
         fridge_door_state,
+        fridge_door_open_count,
+        fridge_door_open_time,
         freezer_door_state,
+        freezer_door_open_count,
+        freezer_door_open_time,
         FRIDGE_ID
     )
     return entry
@@ -61,13 +64,16 @@ def get_entry():
 
 def send_data():
     entry = get_entry()
-    logger.info(f"Publishing new entry to mqtt: {entry.get_json_string()}")
+    logger.info(f"Publishing new entry to mqtt: {json.dumps(json.loads(entry.get_json_string()), indent=4)}")
     mqtt.publish_data(mqtt_client, entry)
 
+def update_sensors():
+    door_sensors.update_status()
 
 def main():
     logger.info("Starting monitoring client")
     schedule.every(1).minutes.do(send_data)
+    schedule.every(1).seconds.do(update_sensors)
 
     while True:
         schedule.run_pending()

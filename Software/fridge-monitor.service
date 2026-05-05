@@ -1,0 +1,17 @@
+[Unit]
+Description=Fridge Monitoring Client
+After=tailscaled.service network-online.target
+Requires=tailscaled.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/monitoringsystem/Software/Client
+EnvironmentFile=/home/pi/fridge.env
+ExecStart=/home/pi/monitoringsystem/Software/venv/bin/python monitor_client.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+

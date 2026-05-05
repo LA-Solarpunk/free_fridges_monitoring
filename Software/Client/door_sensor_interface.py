@@ -64,7 +64,7 @@ class MagnetManager:
             self.error = MagnetErrorEnum.FUNCTIONING
             self.door_state = DoorStateEnum.CLOSED if self.last_reading.NC == GPIO.HIGH else DoorStateEnum.OPEN
 
-    def read(self):
+    def read(self) -> tuple[DoorStateEnum, MagnetErrorEnum]:
         reading = _check_door(self.pins)
         # If the door has changed state, keeps error if no change
         if reading != self.last_reading:
@@ -91,20 +91,57 @@ def error_to_string(error: MagnetErrorEnum):
         return "Door sensor NC line broken"
     else:
         return "Door sensor NO line broken"
+    
+class DoorStatsManager:
+    def __init__(self, magnet_manager: MagnetManager):
+        self.magnet_manager = magnet_manager
+        self.last_state = self.magnet_manager.door_state
+        self.open_count = 0
+        self.open_for = 0.0
+        self.open_time = None
 
+    def update(self):
+        state, error = self.magnet_manager.read()
+        if state == DoorStateEnum.OPEN and self.last_state == DoorStateEnum.CLOSED:
+            self.open_count += 1
+            self.open_time = time.time()
+        elif state == DoorStateEnum.CLOSED and self.last_state == DoorStateEnum.OPEN:
+            self.open_time = None
+        self.last_state = state
+
+    def get_values(self):
+        open_count = self.open_count
+        open_time = 0 if self.open_time is None else time.time() - self.open_time
+        self.open_count = 0
+        return open_count, open_time
+        
 class DoorSensorManager:
     def __init__(self):
         setup_magnet_sensors()
         self.fridge = MagnetManager(fridge_pins)
         self.freezer = MagnetManager(freezer_pins)
-    
+        self.fridge_stats = DoorStatsManager(self.fridge)
+        self.freezer_stats = DoorStatsManager(self.freezer)
+
+    def update_status(self):
+        self.fridge_stats.update()
+        self.freezer_stats.update()
+
     def get_fridge_door(self) -> SensorReading:
         result = self.fridge.read()
-        return SensorReading(result[0], error_to_string(result[1]))
+        open_count, open_time = self.fridge_stats.get_values()
+        door_state = SensorReading(result[0], error_to_string(result[1]))
+        open_time_reading = SensorReading(open_time, None)
+        open_count_reading = SensorReading(open_count, None)
+        return door_state, open_count_reading, open_time_reading
     
     def get_freezer_door(self) -> SensorReading:
         result = self.freezer.read()
-        return SensorReading(result[0], error_to_string(result[1]))
+        open_count, open_time = self.freezer_stats.get_values()
+        door_state = SensorReading(result[0], error_to_string(result[1]))
+        open_time_reading = SensorReading(open_time, None)
+        open_count_reading = SensorReading(open_count, None)
+        return door_state, open_count_reading, open_time_reading
          
 def main():
     manager = DoorSensorManager()
