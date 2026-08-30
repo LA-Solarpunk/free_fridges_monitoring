@@ -14,6 +14,7 @@ PASSWORD = CONFIG.mqtt.password
 BROKER = CONFIG.mqtt.broker
 PORT = CONFIG.mqtt.port
 DATA_TOPIC = CONFIG.mqtt.data_topic
+ALERT_TOPIC = CONFIG.mqtt.alert_topic
 
 FIRST_RECONNECT_DELAY = 1
 RECONNECT_RATE = 2
@@ -57,7 +58,37 @@ def on_disconnect(client, userdata, rc):
 
 def publish_data(client: mqtt_client.Client, data: SensorEntry):
     result = client.publish(DATA_TOPIC, data.get_json_string(), qos=1)
+    publish_alerts(client, data)
     return result
+
+def publish_alerts(client: mqtt_client.Client, data: SensorEntry):
+    #check fridge and freezer temperatures
+    fridge_temp_threshold = 60
+    freezer_temp_threshold = 0
+    fridge_open_time_threshold = 180
+    freezer_open_time_threshold = 180
+    
+    alert_str = ""
+
+    if(data.fridge_temperature > fridge_threshold) {
+        alert_str+=f"Fridge temperateure has dropped below temperature threshold of {fridge_temp_threshold}\n"
+    }
+    if(data.freezer_temperature > freezer_temperature) {
+        alert_str+=f"Freezer temperateure has dropped below temperature threshold of {freezer_temp_threshold}\n"
+    }
+
+    if(data.fridge_door_open_time > fridge_threshold) {
+        alert_str+=f"Fridge has been open for more than the threshold {fridge_open_time_threshold} minutes.\n"
+    }
+    if(data.freezer_door_open_time > freezer_threshold) {
+        alert_str+=f"Freezer has been open for more than the threshold {freezer_open_time_threshold} minutes.\n"
+    }
+
+    if(len(alert_str) > 0)  {
+        printf(alert_str)
+        client.publish(ALERT_TOPIC, alert_str, qos=1)
+    }
+    
 
 if __name__ == "__main__":
     import sys
