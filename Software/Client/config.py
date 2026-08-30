@@ -50,6 +50,14 @@ class Settings:
     gdrive: GDriveCfg
     mqtt: MqttCfg
     app: AppCfg
+    threshold: ThresholdCfg
+
+@dataclass(frozen=True)
+class ThresholdCfg:
+    fridge_open_time_limit: float
+    freezer_open_time_limit: float
+    fridge_temp_threshold: float
+    freezer_temp_threshold: float
 
 
 def load_settings() -> Settings:

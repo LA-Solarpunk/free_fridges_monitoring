@@ -2,6 +2,7 @@ import os
 import time
 import logging
 from datetime import datetime
+from messages import SensorReading
 
 import schedule
 
@@ -33,6 +34,7 @@ FRIDGE_ID = settings.device.device_id
 
 charge_controller = charge_interface.ChargeInterface()
 door_sensors = door_sensor_interface.DoorSensorManager()
+temp_sensors = temperature_interface.TempInterface()
 mqtt_client = mqtt.connect_mqtt()
 
 # assuming fridge, freezer ordering
@@ -41,7 +43,7 @@ gpio_pins = [5, 6]
 
 def get_entry():
     # TODO(Heidt) probably make a data aggregator type class to put all this logic
-    temperature_data = temperature_interface.get_temperatures(gpio_pins)
+    temperature_data = temp_sensors.get_temperatures()
 
     charge_reading = charge_controller.get_charge_data()        
     fridge_door_state, fridge_door_open_count, fridge_door_open_time = door_sensors.get_fridge_door()
@@ -72,12 +74,12 @@ def update_sensors():
 
 def main():
     logger.info("Starting monitoring client")
-    schedule.every(1).minutes.do(send_data)
+    schedule.every(5).seconds.do(send_data)
     schedule.every(1).seconds.do(update_sensors)
 
     while True:
         schedule.run_pending()
-        time.sleep(1)
+        time.sleep(5)
 
 
 if __name__ == "__main__":
