@@ -19,14 +19,6 @@ def default_config_path() -> Path:
 class DeviceCfg:
     device_id: str
 
-@dataclass(frozen=True)
-class AirtableCfg:
-    airtable_api_key: str | None = None
-
-@dataclass(frozen=True)
-class GDriveCfg:
-    fridge_gdrive_credentials: str | None = None
-
 
 @dataclass(frozen=True)
 class MqttCfg:
@@ -45,16 +37,12 @@ class AppCfg:
 @dataclass(frozen=True)
 class Settings:
     device: DeviceCfg
-    airtable: AirtableCfg
-    gdrive: GDriveCfg
     mqtt: MqttCfg
     app: AppCfg
 
 
 def load_settings() -> Settings:
     device_config = DeviceCfg(os.environ["FRIDGE_DEVICE_ID"])
-    airtable_config = AirtableCfg(os.environ["AIRTABLE_API_KEY"])
-    gdrive_config = GDriveCfg(os.environ["FRIDGE_GDRIVE_CREDENTIALS"])
     mqtt_config = MqttCfg(
         broker=os.environ["MQTT_BROKER"],
         port=int(os.environ["MQTT_PORT"]),
@@ -66,8 +54,6 @@ def load_settings() -> Settings:
 
     settings = Settings(
         device=device_config,
-        airtable=airtable_config,
-        gdrive=gdrive_config,
         mqtt=mqtt_config,
         app=app_config,
     )
