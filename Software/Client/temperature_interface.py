@@ -15,9 +15,9 @@ THRESHOLD_CONFIG = CONFIG.threshold
 
 class TempInterface: 
     def __init__(self, gpio_pins):
-        self.sensor_map = get_w1_pin_map(gpio_pins)
+        self.sensor_map = self.get_w1_pin_map(gpio_pins)
 
-    def get_w1_pin_map(gpio_pins: list[int]) -> dict[str, int]:
+    def get_w1_pin_map(self, gpio_pins: list[int]) -> dict[str, int]:
         """
         Returns a dict mapping sensor ID (e.g. '28-abcdef012345') to its GPIO pin.
         
@@ -50,7 +50,7 @@ class TempInterface:
         return sensor_to_pin
 
 
-    def read_temperature(sensor_id: str) -> float | None:
+    def read_temperature(self, sensor_id: str) -> float | None:
         """Read temperature in Celsius from a DS18B20 by its sensor ID."""
         device_file = f"/sys/bus/w1/devices/{sensor_id}/w1_slave"
         
@@ -63,7 +63,7 @@ class TempInterface:
         
         return None  # CRC check failed
 
-    def get_temperatures():
+    def get_temperatures(self):
         """
         Returns a dict mapping gpio pin to temperature
         
@@ -72,16 +72,16 @@ class TempInterface:
         """
         temperatures = {}
         for sensor_id, pin in self.sensor_map.items():
-            temp = read_temperature(sensor_id)
+            temp = self.read_temperature(sensor_id)
             error = "Issue reading temp sensor" if temp is None else None
             temperatures[pin] = SensorReading(temp, error)
 
         
         return temperatures
     
-    def print_temperatures(): 
+    def print_temperatures(self): 
         for sensor_id, pin in self.sensor_map.items():
-            temp = read_temperature(sensor_id)
+            temp = self.read_temperature(sensor_id)
             print(f"  GPIO{pin} | {sensor_id} | {temp:.3f}°C")
 
 

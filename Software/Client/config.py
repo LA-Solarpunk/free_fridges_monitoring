@@ -33,7 +33,7 @@ class MqttCfg:
     broker: str
     port: int
     data_topic: str
-    alert_topic: str
+    #alert_topic: str
     username: str
     password: str
 
@@ -68,12 +68,19 @@ def load_settings() -> Settings:
         broker=os.environ["MQTT_BROKER"],
         port=int(os.environ["MQTT_PORT"]),
         data_topic=os.environ["MQTT_TOPIC"],
-        alert_topic=os.environ("MQTT_ALERT_TOPIC")
+        #alert_topic=os.environ("MQTT_ALERT_TOPIC")
         username=os.environ["MQTT_USERNAME"],
         password=os.environ["MQTT_PASSWORD"],
     )
 
     app_config = AppCfg(os.environ["FRIDGE_LOGLEVEL"])
+
+    threshold_config = ThresholdCfg(
+        fridge_open_time_limit=180.0,
+        freezer_open_time_limit=180.0,
+        fridge_temp_threshold=60.0,
+        freezer_temp_threshold=10.0,
+    )
 
     settings = Settings(
         device=device_config,
@@ -81,7 +88,10 @@ def load_settings() -> Settings:
         gdrive=gdrive_config,
         mqtt=mqtt_config,
         app=app_config,
+        threshold=threshold_config
     )
+
+    
     logger.info(f"Loaded new config \n{pprint.pformat(settings)}")
     
     return settings
