@@ -53,3 +53,48 @@ class SensorEntry:
             "Errors": errors
         }
         return json.dumps(new_entry)
+
+class AlertEntry: 
+
+    def __init__(self, data, config):
+        self.data = data
+        self.dirty = false
+
+        #check fridge and freezer temperatures
+        fridge_temp_threshold = config.threshold.fridge_temp_threshold
+        freezer_temp_threshold = config.threshold.freezer_temp_threshold
+        fridge_open_time_threshold = config.threshold.fridge_open_time_limit 
+        freezer_open_time_threshold = config.threshold.freezer_open_time_limit
+        
+        self.alert_info = {}
+
+        if(data.fridge_temperature > fridge_temp_threshold) {
+            self.alert_info = self.alert_info | {
+                f"Fridge Threshold ({fridge_temp_threshold})" : f"Triggered alert at temperature {self.data.fridge_temperature.value}"
+            }
+        }
+        if(data.freezer_temperature > freezer_temp_threshold) {
+            self.alert_info = self.alert_info | {
+                f"Freezer Threshold ({freezer_temp_threshold})" : f"Triggered alert at temperature {self.data.freezer_temperature.value}"
+            }
+        }
+        if(data.fridge_door_open_time > fridge_open_time_threshold) {
+            self.alert_info = self.alert_info | {
+                f"Fridge Open Time Threshold ({fridge_open_time_threshold})" : f"Triggered alert at {self.data.fridge_door_open_count.value} seconds"
+            }
+        }
+        if(data.freezer_door_open_time > freezer_open_time_threshold) {
+            self.alert_info = self.alert_info | {
+                f"Freezer Open Time Threshold ({freezer_open_time_threshold})" : f"Triggered alert at {self.data.freezer_door_open_count.value} seconds"
+            }
+        }
+
+        if(len(alert_info) > 0)  {
+            self.dirty = true 
+        }
+
+    def doPublish()
+        return self.dirty
+
+    def get_json_string() 
+        return json.dumps(self.alert_info)        

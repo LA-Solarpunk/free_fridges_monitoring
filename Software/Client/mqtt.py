@@ -2,7 +2,7 @@ from paho.mqtt import client as mqtt_client
 import os
 import logging
 import time
-from messages import SensorEntry
+from messages import SensorEntry, AlertEntry
 import config
 
 logger = logging.getLogger(__name__)
@@ -62,32 +62,11 @@ def publish_data(client: mqtt_client.Client, data: SensorEntry):
     return result
 
 def publish_alerts(client: mqtt_client.Client, data: SensorEntry):
-    #check fridge and freezer temperatures
-    fridge_temp_threshold = 60
-    freezer_temp_threshold = 0
-    fridge_open_time_threshold = 180
-    freezer_open_time_threshold = 180
     
-    alert_str = ""
+    alert_data = AlertEntry(data)
 
-    if(data.fridge_temperature > fridge_threshold) {
-        alert_str+=f"Fridge temperateure has dropped below temperature threshold of {fridge_temp_threshold}\n"
-    }
-    if(data.freezer_temperature > freezer_temperature) {
-        alert_str+=f"Freezer temperateure has dropped below temperature threshold of {freezer_temp_threshold}\n"
-    }
-
-    if(data.fridge_door_open_time > fridge_threshold) {
-        alert_str+=f"Fridge has been open for more than the threshold {fridge_open_time_threshold} minutes.\n"
-    }
-    if(data.freezer_door_open_time > freezer_threshold) {
-        alert_str+=f"Freezer has been open for more than the threshold {freezer_open_time_threshold} minutes.\n"
-    }
-
-    if(len(alert_str) > 0)  {
-        printf(alert_str)
-        client.publish(ALERT_TOPIC, alert_str, qos=1)
-    }
+    if(alert_data.doPublish()):
+        client.publish(ALERT_TOPIC, alert_data.get_json_string(), qos=1)
     
 
 if __name__ == "__main__":
