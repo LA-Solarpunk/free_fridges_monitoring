@@ -21,6 +21,10 @@ MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
 
 def connect_mqtt():
+    # TODO relies on the broker only being reachable over the Tailscale tailnet
+    # for transport encryption (see fridge-monitor.service's Requires=tailscaled.service).
+    # No TLS is configured at the MQTT layer itself - if the broker is ever exposed
+    # outside the tailnet, add client.tls_set(...) and move off port 1883.
     def on_connect(client, userdata, flags, rc, properties):
         if rc == 0:
             print("Connected to MQTT Broker!")
