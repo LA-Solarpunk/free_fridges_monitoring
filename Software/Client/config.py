@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import os
 import logging
@@ -26,7 +26,7 @@ class MqttCfg:
     port: int
     data_topic: str
     username: str
-    password: str
+    password: str = field(repr=False)
 
 
 @dataclass(frozen=True)
