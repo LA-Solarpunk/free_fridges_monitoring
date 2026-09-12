@@ -1,7 +1,7 @@
 # Free Fridge Monitoring
 
-The city of LA has a network of (free community fridges)[https://www.lacommunityfridges.com/] 
-that serve as distributed food pantries for the city. The (K-Town fridge)[https://www.lacommunityfridges.com/fridge/koreatown-solar/r/recZlfyUDA3hGEN5D] is a solar powered version. We're working with
+The city of LA has a network of [free community fridges](https://www.lacommunityfridges.com/)
+that serve as distributed food pantries for the city. The [K-Town fridge](https://www.lacommunityfridges.com/fridge/koreatown-solar/r/recZlfyUDA3hGEN5D) is a solar powered version. We're working with
 the solar fridge group to build a remote monitoring system for them.
 
 A cloudy week or a door left ajar can spoil everything inside before anyone
