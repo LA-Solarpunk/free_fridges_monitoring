@@ -1,0 +1,7 @@
+user ktown_alexandria
+topic readwrite fridges/sensor_data
+topic write fridges/alerts
+
+user telegraf
+topic read fridges/sensor_data
+topic read diag/#
