@@ -6,6 +6,18 @@ class DoorStateEnum(Enum):
     OPEN = 0
     CLOSED = 1
     UNKNOWN = 2
+
+@dataclass
+class Config:
+    threshold: Threshold
+
+@dataclass 
+class Threshold: 
+    fridge_open_time_limit: float
+    freezer_open_time_limit: float
+    fridge_temp_threshold: float
+    freezer_temp_threshold: float
+
 @dataclass    
 class SensorReading:
     value: int | float | str
@@ -58,7 +70,7 @@ class AlertEntry:
 
     def __init__(self, data, config):
         self.data = data
-        self.dirty = false
+        self.dirty = False
 
         #check fridge and freezer temperatures
         fridge_temp_threshold = config.threshold.fridge_temp_threshold
@@ -68,33 +80,92 @@ class AlertEntry:
         
         self.alert_info = {}
 
-        if(data.fridge_temperature > fridge_temp_threshold) {
-            self.alert_info = self.alert_info | {
-                f"Fridge Threshold ({fridge_temp_threshold})" : f"Triggered alert at temperature {self.data.fridge_temperature.value}"
-            }
-        }
-        if(data.freezer_temperature > freezer_temp_threshold) {
-            self.alert_info = self.alert_info | {
-                f"Freezer Threshold ({freezer_temp_threshold})" : f"Triggered alert at temperature {self.data.freezer_temperature.value}"
-            }
-        }
-        if(data.fridge_door_open_time > fridge_open_time_threshold) {
-            self.alert_info = self.alert_info | {
-                f"Fridge Open Time Threshold ({fridge_open_time_threshold})" : f"Triggered alert at {self.data.fridge_door_open_count.value} seconds"
-            }
-        }
-        if(data.freezer_door_open_time > freezer_open_time_threshold) {
-            self.alert_info = self.alert_info | {
-                f"Freezer Open Time Threshold ({freezer_open_time_threshold})" : f"Triggered alert at {self.data.freezer_door_open_count.value} seconds"
+        self.alert_data = {
+            "fridge": {
+                "open_time": data.fridge_door_open_time,
+                "temp": data.fridge_temperature,
+                "device_threshold": {
+                    "open_time": fridge_open_time_threshold,
+                    "temp": fridge_temp_threshold
+                },
+                "trigger": {
+                    "open_time": data.fridge_door_open_time > fridge_open_time_threshold,
+                    "temp": data.fridge_temperature > fridge_temp_threshold
+                }
+            },
+            "freezer": {
+                "open_time": data.freezer_door_open_time,
+                "temp": data.freezer_temperature,
+                "device_threshold": {
+                    "open_time": freezer_open_time_threshold,
+                    "temp": freezer_temp_threshold
+                },
+                "trigger": {
+                    "open_time": data.freezer_door_open_time > freezer_open_time_threshold,
+                    "temp": data.freezer_temperature > freezer_temp_threshold
+                }
             }
         }
 
-        if(len(alert_info) > 0)  {
-            self.dirty = true 
-        }
+        if(data.fridge_temperature > fridge_temp_threshold):
+            self.alert_info = self.alert_info | {
+                f"Fridge Threshold ({fridge_temp_threshold})" : f"Triggered alert at temperature {self.data.fridge_temperature}"
+            }
+        
+        if(data.freezer_temperature > freezer_temp_threshold):
+            self.alert_info = self.alert_info | {
+                f"Freezer Threshold ({freezer_temp_threshold})" : f"Triggered alert at temperature {self.data.freezer_temperature}"
+            }
+        
+        if(data.fridge_door_open_time > fridge_open_time_threshold):
+            self.alert_info = self.alert_info | {
+                f"Fridge Open Time Threshold ({fridge_open_time_threshold})" : f"Triggered alert at {self.data.fridge_door_open_count} seconds"
+            }
+        
+        if(data.freezer_door_open_time > freezer_open_time_threshold):
+            self.alert_info = self.alert_info | {
+                f"Freezer Open Time Threshold ({freezer_open_time_threshold})" : f"Triggered alert at {self.data.freezer_door_open_count} seconds"
+            }
+        
+        
+        
 
-    def doPublish()
+        if(len(self.alert_data) > 0):
+            self.dirty = True 
+        
+
+    def doPublish():
         return self.dirty
 
-    def get_json_string() 
-        return json.dumps(self.alert_info)        
+    def get_json_string(self):
+        return json.dumps(self.alert_data)   
+
+if __name__ == "__main__":
+    data = SensorEntry(
+        70.0, # fridge temp
+        15.0, # freezer temp
+        79.0, # charge 
+        1, # fridge open status
+        0, # fridge open count
+        10.0, # fridge open time
+        1, # freezer open status
+        0, # freezer open count
+        10.0, # freezer open time
+        "test fridge", #fridge ID
+    )
+    
+    config = Config(
+        threshold = Threshold(
+            fridge_open_time_limit=180.0,
+            freezer_open_time_limit=180.0,
+            fridge_temp_threshold=60.0,
+            freezer_temp_threshold=10.0
+        )
+    )
+    
+
+    alert = AlertEntry(data, config)
+
+    val = alert.get_json_string()
+
+    print(val)
