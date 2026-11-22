@@ -5,6 +5,7 @@ import time
 import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.ads1x15 import Pin
 from adafruit_ads1x15.analog_in import AnalogIn
 from messages import SensorReading
 
@@ -16,7 +17,7 @@ HALL_SENSOR_MAX_CURRENT_MA = 20.0
 HALL_SENSOR_MAX_RATED_AMPS = 100.0
 
 ADS1115_ADDRESS = 0x48
-ADS1115_CHANNELS = {0: ADS.P0, 1: ADS.P1, 2: ADS.P2, 3: ADS.P3}
+ADS1115_CHANNELS = {0: Pin.A0, 1: Pin.A1, 2: Pin.A2, 3: Pin.A3}
 
 
 class CurrentMonitor:
@@ -39,7 +40,7 @@ class CurrentMonitor:
             / (HALL_SENSOR_MAX_CURRENT_MA - HALL_SENSOR_MIN_CURRENT_MA)
             * HALL_SENSOR_MAX_RATED_AMPS
         )
-        return SensorReading(amps, None)
+        return SensorReading(max(amps, 0.0), None)
 
 
 class ChargeInterface:
@@ -47,7 +48,11 @@ class ChargeInterface:
         self.serial_port = serial_port
         self.controller = None
         self.setup_controller()
-        self.current_monitor = CurrentMonitor()
+        try:
+            self.current_monitor = CurrentMonitor()
+        except (OSError, ValueError):
+            logging.warning("Could not set up ADS1115 current monitor, fridge watt-hours will be disabled")
+            self.current_monitor = None
 
         self.fridge_watt_hours = 0.0
         self.load_watt_hours = 0.0
@@ -99,16 +104,19 @@ class ChargeInterface:
         elapsed_hours = 0.0 if self.last_watt_hour_update is None else (now - self.last_watt_hour_update) / 3600.0
         self.last_watt_hour_update = now
 
-        current_reading = self.current_monitor.read_current()
-        if current_reading.error is None:
-            try:
-                battery_voltage = self.controller.get_battery_voltage()
-                fridge_watts = battery_voltage * current_reading.value
-                self.fridge_watt_hours += fridge_watts * elapsed_hours
-            except minimalmodbus.NoResponseError:
-                logging.warning("No response from charge controller while updating fridge watt-hours")
+        if self.current_monitor is None:
+            logging.warning("Skipping fridge watt-hour update: current monitor not available")
         else:
-            logging.warning(f"Skipping fridge watt-hour update: {current_reading.error}")
+            current_reading = self.current_monitor.read_current()
+            if current_reading.error is None:
+                try:
+                    battery_voltage = self.controller.get_battery_voltage()
+                    fridge_watts = battery_voltage * current_reading.value
+                    self.fridge_watt_hours += fridge_watts * elapsed_hours
+                except minimalmodbus.NoResponseError:
+                    logging.warning("No response from charge controller while updating fridge watt-hours")
+            else:
+                logging.warning(f"Skipping fridge watt-hour update: {current_reading.error}")
 
         try:
             load_watts = self.controller.get_load_power()
