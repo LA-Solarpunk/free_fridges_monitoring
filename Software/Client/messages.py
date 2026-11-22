@@ -22,6 +22,8 @@ class SensorEntry:
     freezer_door_status: SensorReading
     freezer_door_open_count: SensorReading
     freezer_door_open_time: SensorReading
+    fridge_watt_hours: SensorReading
+    load_watt_hours: SensorReading
     fridge_id: str
 
     def get_doorstatus_string(self, door_status: DoorStateEnum):
@@ -35,7 +37,7 @@ class SensorEntry:
     def get_json_string(self):
         errors = ""
         # TODO(Heidt) need a better way to go through sensor readings looking for errors...
-        readings = [self.fridge_temperature, self.freezer_temperature, self.charge_status, self.fridge_door_status, self.freezer_door_status]
+        readings = [self.fridge_temperature, self.freezer_temperature, self.charge_status, self.fridge_door_status, self.freezer_door_status, self.fridge_watt_hours, self.load_watt_hours]
         for reading in readings:
             if reading.error:
                 errors += reading.error + "\n"
@@ -50,6 +52,8 @@ class SensorEntry:
             "Freezer Door Status": self.get_doorstatus_string(self.freezer_door_status.value),
             "Freezer Open Count": self.freezer_door_open_count.value,
             "Freezer Open Time": self.freezer_door_open_time.value,
+            "Fridge Watt Hours": self.fridge_watt_hours.value,
+            "Load Watt Hours": self.load_watt_hours.value,
             "Errors": errors
         }
         return json.dumps(new_entry)

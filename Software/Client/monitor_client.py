@@ -58,6 +58,8 @@ def get_entry():
         freezer_door_state,
         freezer_door_open_count,
         freezer_door_open_time,
+        charge_controller.get_fridge_watt_hours(),
+        charge_controller.get_load_watt_hours(),
         FRIDGE_ID
     )
     return entry
@@ -70,6 +72,7 @@ def send_data():
 
 def update_sensors():
     door_sensors.update_status()
+    charge_controller.update_watt_hours()
 
 def main():
     logger.info("Starting monitoring client")
