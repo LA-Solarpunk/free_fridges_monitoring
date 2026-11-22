@@ -30,26 +30,27 @@ logging.basicConfig(
 )
 settings = config.load_settings()
 FRIDGE_ID = settings.device.device_id
+FRIDGE_TEMPSENSOR_ID = settings.device.fridge_tempsensor_id
+FREEZER_TEMPSENSOR_ID = settings.device.freezer_tempsensor_id
 
 charge_controller = charge_interface.ChargeInterface()
 door_sensors = door_sensor_interface.DoorSensorManager()
 mqtt_client = mqtt.connect_mqtt()
 
-# assuming fridge, freezer ordering
-gpio_pins = [5, 6]
-
 
 def get_entry():
     # TODO(Heidt) probably make a data aggregator type class to put all this logic
-    temperature_data = temperature_interface.get_temperatures(gpio_pins)
+    temperature_data = temperature_interface.get_temperatures(
+        [FRIDGE_TEMPSENSOR_ID, FREEZER_TEMPSENSOR_ID]
+    )
 
-    charge_reading = charge_controller.get_charge_data()        
+    charge_reading = charge_controller.get_charge_data()
     fridge_door_state, fridge_door_open_count, fridge_door_open_time = door_sensors.get_fridge_door()
     freezer_door_state, freezer_door_open_count, freezer_door_open_time = door_sensors.get_freezer_door()
 
     entry = messages.SensorEntry(
-        temperature_data[gpio_pins[0]],
-        temperature_data[gpio_pins[1]],
+        temperature_data[FRIDGE_TEMPSENSOR_ID],
+        temperature_data[FREEZER_TEMPSENSOR_ID],
         charge_reading,
         fridge_door_state,
         fridge_door_open_count,

@@ -18,6 +18,8 @@ def default_config_path() -> Path:
 @dataclass(frozen=True)
 class DeviceCfg:
     device_id: str
+    fridge_tempsensor_id: str
+    freezer_tempsensor_id: str
 
 
 @dataclass(frozen=True)
@@ -42,7 +44,11 @@ class Settings:
 
 
 def load_settings() -> Settings:
-    device_config = DeviceCfg(os.environ["FRIDGE_DEVICE_ID"])
+    device_config = DeviceCfg(
+        device_id=os.environ["FRIDGE_DEVICE_ID"],
+        fridge_tempsensor_id=os.environ["FRIDGE_TEMPSENSOR_ID"],
+        freezer_tempsensor_id=os.environ["FREEZER_TEMPSENSOR_ID"],
+    )
     mqtt_config = MqttCfg(
         broker=os.environ["MQTT_BROKER"],
         port=int(os.environ["MQTT_PORT"]),

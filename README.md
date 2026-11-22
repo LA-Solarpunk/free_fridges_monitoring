@@ -39,15 +39,12 @@ Flash Raspberry Pi OS 32-bit to a Pi Zero W.
 
 ### 2. Enable 1-Wire and serial
 
-Add both temperature bus overlays to `/boot/firmware/config.txt`:
+Both temperature probes share a single 1-Wire bus now. Add one overlay to
+`/boot/firmware/config.txt`:
 
 ```
-dtoverlay=w1-gpio,gpiopin=5
 dtoverlay=w1-gpio,gpiopin=6
 ```
-
-Order matters. The client maps bus masters to GPIO pins by their sorted order on the
-filesystem, so pin 5 has to be declared first.
 
 Then run `sudo raspi-config`, go to Interface Options, and enable the serial port
 hardware while leaving the serial login shell disabled. The charge controller needs the
@@ -79,6 +76,8 @@ The client reads its settings from environment variables. Create `/home/pi/fridg
 
 ```
 FRIDGE_DEVICE_ID=<fridge name>
+FRIDGE_TEMPSENSOR_ID=<fridge probe ROM ID>
+FREEZER_TEMPSENSOR_ID=<freezer probe ROM ID>
 MQTT_BROKER=<server tailscale hostname>
 MQTT_PORT=1883
 MQTT_TOPIC=fridges/sensor_data
@@ -91,6 +90,19 @@ FRIDGE_GDRIVE_CREDENTIALS=unused
 
 `FRIDGE_DEVICE_ID` is also used as the MQTT client ID, so it has to be unique across
 fridges. The broker credentials come from step 7 of the server setup.
+
+Both probes share one 1-Wire bus, so the client tells them apart by their ROM ID
+(e.g. `28-abcdef012345`) rather than by which GPIO pin they're on. To find out which
+physical probe has which ID, run the temperature interface directly:
+
+```bash
+./venv/bin/python Client/temperature_interface.py
+```
+
+This lists every sensor ID on the bus with its current reading once a second. Warm one
+probe with your hand (or dunk it in water) and watch which ID's temperature moves — that
+tells you which ROM ID is the fridge probe and which is the freezer probe. Set
+`FRIDGE_TEMPSENSOR_ID` and `FREEZER_TEMPSENSOR_ID` accordingly, then Ctrl+C to stop.
 
 The last two variables are required by the config loader even though nothing in the
 current data path reads them. See Known gaps below.
@@ -116,15 +128,17 @@ journalctl -u fridge-monitor -f
 ```
 
 The client logs each reading before publishing it. If temperatures come back as errors,
-check that both W1 bus masters appeared:
+check that the W1 bus master appeared and both probes are on it:
 
 ```bash
 ls /sys/bus/w1/devices/
 ```
 
-You should see two `w1_bus_master*` entries and a `28-*` entry per probe. If the charge
-controller reports no response, the client scans the Modbus address range at startup and
-logs what it finds, so the log will say whether it saw the device at all.
+You should see one `w1_bus_master*` entry and a `28-*` entry per probe underneath it. If
+a `FRIDGE_TEMPSENSOR_ID`/`FREEZER_TEMPSENSOR_ID` doesn't match either `28-*` entry, fix
+the env file — see step 5. If the charge controller reports no response, the client
+scans the Modbus address range at startup and logs what it finds, so the log will say
+whether it saw the device at all.
 
 Confirm the reading reached the server by querying InfluxDB there.
 
